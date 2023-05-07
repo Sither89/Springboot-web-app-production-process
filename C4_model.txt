@@ -1,0 +1,128 @@
+workspace {
+    
+   !identifiers hierarchical
+    
+    model {
+        user = person "Production controller"
+    
+        softwareSystem = softwareSystem "Enterprise System"{
+            tags "softwareSystem" "EnterpriseSystem"
+            
+            microservice = container "Web Application"
+ 
+            service1 = group "Warehouse" {
+                service1Api = container "Warehouse" {
+                    tags "Service 1" "Service API"
+                    WarehouseController = component "WarehouseController" "Add Sale order and create Planned order for send to Production" {
+                    tags "Service 1"
+                    }
+                    WarehouseService = component "WarehouseService" "createPlannedOrder(data) \n getAllPlannedOrder() \n searchByPlannednumber(plannednumber)"{
+                    tags "Service 1"
+                    }
+                    WarehouseRepository = component "WarehouseRepository" {
+                    tags "Service 1"
+                    }
+                    WarehouseEntity = component "WarehouseEntity" "Sale order and Planned order detail for operation data"{
+                    tags "Service 1"
+                    }
+          
+                    WarehouseController -> WarehouseService "Uses"
+                    WarehouseController -> WarehouseRepository "Uses"
+                    WarehouseController -> WarehouseEntity "Uses"
+                    WarehouseRepository -> WarehouseEntity "Uses"
+                    WarehouseService -> WarehouseEntity "Uses"
+                    WarehouseService -> WarehouseRepository "Uses"
+                }
+                database1 = container "Warehouse Database" {
+                    tags "Service 1" "Database"
+                    service1Api -> this "Reads from and writes to"
+                }
+                
+            }
+
+            service2 = group "Production" {
+                service2Api = container "Production" {
+                    tags "Service 2" "Service API"
+                }
+                database2 = container "Production Database" {
+                    tags "Service 2" "Database"
+                    service2Api -> this "Reads from and writes to"
+                }
+            }
+
+            user -> microservice "want to create Planned order and send to Production"
+            #Relationship Service in warehouse
+            microservice -> service1Api "Call API service to save SaleOrder and create Planned order"
+            service1Api -> service2Api "Call API service to send PlannedOrder"
+            service1Api.WarehouseRepository -> softwareSystem.database1 "Read data from and write data to"
+            microservice -> service1Api.WarehouseController "Call API service to save SaleOrder and create Planned order"
+
+        }
+        
+        kafkaServer = softwareSystem "Kafka server" {
+            kafka = container "Kafka server"
+        }
+        
+        softwareSystem -> kafkaServer "Send message to kafka server for send to Production controller"
+        kafkaServer -> user "Send message to Production controller"
+        softwareSystem.service1Api.WarehouseService -> kafkaServer "send data to"
+
+    }
+    
+    views {
+        systemContext softwareSystem "SystemContext"{
+            include * 
+            autolayout
+        }
+        
+        container softwareSystem "Containers_All" {
+            include *
+            autolayout
+        }
+
+        # container softwareSystem "Containers_Service1" {
+        #     include ->softwareSystem.service1->
+        #     autolayout
+        # }
+
+        # container softwareSystem "Containers_Service2" {
+        #     include ->softwareSystem.service2->
+        #     autolayout
+        # }
+        
+        component softwareSystem.service1Api {
+             include *
+             autolayout
+        }
+        
+
+
+
+
+        styles {
+            element "EnterpriseSystem"{
+                background	#FEE227
+            }
+            element "Person" {
+                shape Person
+                background	#006db0
+            }
+            element "Service API" {
+                shape hexagon
+            }
+            element "Database" {
+                shape cylinder
+            }
+            element "Service 1" {
+                background #91F0AE
+            }
+            element "Service 2" {
+                background #EDF08C
+            }
+
+            
+        }
+
+    }
+
+}
